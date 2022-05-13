@@ -2,12 +2,17 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Castle.Core.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Playground;
+using Playground.Controllers;
+using ILogger = Castle.Core.Logging.ILogger;
 
 namespace WeatherForecast_iTest
 {
@@ -16,11 +21,14 @@ namespace WeatherForecast_iTest
     {
         private HttpClient _client;
         private TestServer _testServer;
+        private WeatherForecastController controller;
+        private Mock<IWeatherForecast> weatherForecast;
 
         [SetUp]
         public void Setup()
         {
-            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>());
+            weatherForecast = new Mock<IWeatherForecast>();
+            _testServer = new TestServer(new WebHostBuilder().UseStartup<ServiceHelper>());
             _client = _testServer.CreateClient();
         }
         [TearDown]

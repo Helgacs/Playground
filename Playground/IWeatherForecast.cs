@@ -8,5 +8,6 @@ namespace Playground
         int TemperatureC { get; set; }
         int TemperatureF { get; }
         string Summary { get; set; }
+        public void ModifyTemperatureC();
     }
 }

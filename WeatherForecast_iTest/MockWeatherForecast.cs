@@ -1,11 +1,16 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Playground;
 
-namespace Playground
+namespace WeatherForecast_iTest
 {
-    public class WeatherForecast :IWeatherForecast
+    public class MockWeatherForecast : IWeatherForecast
     {
         public DateTime Date { get; set; }
-
         public int TemperatureC { get; set; }
 
         public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
@@ -16,5 +21,7 @@ namespace Playground
         {
             TemperatureC = -100;
         }
+
+        
     }
 }
