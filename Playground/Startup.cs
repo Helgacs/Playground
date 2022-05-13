@@ -32,6 +32,7 @@ namespace Playground
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Playground", Version = "v1" });
             });
+            ConfigureAdditionalServices(services);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -54,6 +55,10 @@ namespace Playground
             {
                 endpoints.MapControllers();
             });
+        }
+
+        protected virtual void ConfigureAdditionalServices(IServiceCollection services)
+        {
         }
     }
 }

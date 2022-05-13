@@ -5,49 +5,44 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Playground;
 
 namespace WeatherForecast_iTest
 {
-    public class ServiceHelper
+    public class ConfigurableStartup : Startup
     {
-        public ServiceHelper(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-        public IConfiguration Configuration { get; }
+        private readonly Action<IServiceCollection> configureAction;
 
-        public void ConfigureServices(IServiceCollection services)
+        public ConfigurableStartup(IConfiguration configuration, Action<IServiceCollection> configureAction)
+            : base(configuration) => this.configureAction = configureAction;
+
+        protected override void ConfigureAdditionalServices(IServiceCollection services)
         {
-            services.AddControllers();
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Playground", Version = "v1" });
-            });
+            configureAction(services);
+        }
+    }
+
+    public class ConfigurableServer : TestServer
+    {
+        public ConfigurableServer(Action<IServiceCollection> configureAction = null) : base(CreateBuilder(configureAction))
+        {
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        private static IWebHostBuilder CreateBuilder(Action<IServiceCollection> configureAction)
         {
-            if (env.IsDevelopment())
+            if (configureAction == null)
             {
-                app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Playground v1"));
+                configureAction = (sc) => { };
             }
-
-            app.UseHttpsRedirection();
-
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            var builder = new WebHostBuilder()
+                .ConfigureServices(sc => sc.AddSingleton<Action<IServiceCollection>>(configureAction))
+                .UseStartup<ConfigurableStartup>();
+            return builder;
         }
     }
 }

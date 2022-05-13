@@ -6,13 +6,14 @@ using Castle.Core.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using Playground;
 using Playground.Controllers;
-using ILogger = Castle.Core.Logging.ILogger;
 
 namespace WeatherForecast_iTest
 {
@@ -21,14 +22,21 @@ namespace WeatherForecast_iTest
     {
         private HttpClient _client;
         private TestServer _testServer;
-        private WeatherForecastController controller;
         private Mock<IWeatherForecast> weatherForecast;
+        private ServiceDescriptor _serviceDescriptor;
 
         [SetUp]
         public void Setup()
         {
             weatherForecast = new Mock<IWeatherForecast>();
-            _testServer = new TestServer(new WebHostBuilder().UseStartup<ServiceHelper>());
+            weatherForecast.Setup(x => x.TemperatureC);
+            weatherForecast.Setup(x => x.Date);
+            weatherForecast.Setup(x => x.Summary);
+            weatherForecast.Setup(x => x.TemperatureF);
+            weatherForecast.Setup(x => x.ModifyTemperatureC());
+            _serviceDescriptor = new ServiceDescriptor(typeof(IWeatherForecast), weatherForecast.Object);
+            weatherForecast = new Mock<IWeatherForecast>();
+            _testServer = new ConfigurableServer(x => x.Replace(_serviceDescriptor));
             _client = _testServer.CreateClient();
         }
         [TearDown]
