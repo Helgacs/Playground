@@ -8,8 +8,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Moq;
 using Playground;
 
 namespace WeatherForecast_iTest
@@ -29,18 +31,26 @@ namespace WeatherForecast_iTest
 
     public class ConfigurableServer : TestServer
     {
+        public static Mock<IWeatherForecast> weatherForecast;
         public ConfigurableServer(Action<IServiceCollection> configureAction = null) : base(CreateBuilder(configureAction))
         {
         }
 
         private static IWebHostBuilder CreateBuilder(Action<IServiceCollection> configureAction)
         {
+            weatherForecast = new Mock<IWeatherForecast>();
+            weatherForecast.Setup(x => x.TemperatureC).Returns(30);
+            weatherForecast.Setup(x => x.Date).Returns(DateTime.Now);
+            weatherForecast.Setup(x => x.Summary).Returns("Cool");
+            weatherForecast.Setup(x => x.TemperatureF).Returns(100);
+            weatherForecast.Setup(x => x.ModifyTemperatureC());
+          
             if (configureAction == null)
             {
                 configureAction = (sc) => { };
             }
             var builder = new WebHostBuilder()
-                .ConfigureServices(sc => sc.AddSingleton<Action<IServiceCollection>>(configureAction))
+                .ConfigureServices(sc => sc.AddSingleton(weatherForecast.Object))
                 .UseStartup<ConfigurableStartup>();
             return builder;
         }

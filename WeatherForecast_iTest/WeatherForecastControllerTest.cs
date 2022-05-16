@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -23,20 +24,15 @@ namespace WeatherForecast_iTest
         private HttpClient _client;
         private TestServer _testServer;
         private Mock<IWeatherForecast> weatherForecast;
-        private ServiceDescriptor _serviceDescriptor;
+        private List<Mock<IWeatherForecast>> weatherForecasts;
 
         [SetUp]
         public void Setup()
         {
+            weatherForecasts = new List<Mock<IWeatherForecast>>();
             weatherForecast = new Mock<IWeatherForecast>();
-            weatherForecast.Setup(x => x.TemperatureC);
-            weatherForecast.Setup(x => x.Date);
-            weatherForecast.Setup(x => x.Summary);
-            weatherForecast.Setup(x => x.TemperatureF);
-            weatherForecast.Setup(x => x.ModifyTemperatureC());
-            _serviceDescriptor = new ServiceDescriptor(typeof(IWeatherForecast), weatherForecast.Object);
-            weatherForecast = new Mock<IWeatherForecast>();
-            _testServer = new ConfigurableServer(x => x.Replace(_serviceDescriptor));
+            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecast.Object)));
+            weatherForecasts.Add(weatherForecast);
             _client = _testServer.CreateClient();
         }
         [TearDown]
@@ -49,6 +45,10 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task Response_Is_Ok_WeatherForecast_Test()
         {
+            weatherForecast.Setup(x => x.TemperatureC).Returns(30);
+            weatherForecast.Setup(x => x.Date).Returns(DateTime.Now);
+            weatherForecast.Setup(x => x.Summary).Returns("Cool");
+            weatherForecast.Setup(x => x.TemperatureF).Returns(100);
             var response = await _client.GetAsync("/WeatherForecast");
             Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         }
@@ -56,16 +56,23 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task Get_5_WeatherForecast_Test()
         {
+            weatherForecast.Setup(x => x.TemperatureC).Returns(30);
+            weatherForecast.Setup(x => x.Date).Returns(DateTime.Now);
+            weatherForecast.Setup(x => x.Summary).Returns("Cool");
+            weatherForecast.Setup(x => x.TemperatureF).Returns(100);
+
             var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
             HttpResponseMessage response = await _client.SendAsync(request);
             string responseContent = await response.Content.ReadAsStringAsync();
             WeatherForecast[] forecasts = JsonConvert.DeserializeObject<WeatherForecast[]>(responseContent);
-            Assert.AreEqual(5, forecasts.Length);
+            Assert.AreEqual(weatherForecasts.Count, forecasts.Length);
+            Assert.That(forecasts[0].TemperatureC, Is.EqualTo(30));
         }
 
         [Test]
         public async Task Get_TemperatureC_WeatherForecast_Test()
         {
+            weatherForecast.Setup(x => x.TemperatureC).Returns(35);
             var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
             HttpResponseMessage response = await _client.SendAsync(request);
             string responseContent = await response.Content.ReadAsStringAsync();
@@ -86,6 +93,7 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task TemperatureC_Is_Minus100_WeatherForecast_Test()
         {
+            weatherForecast.Setup(x => x.ModifyTemperatureC());
             var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
             HttpResponseMessage response = await _client.SendAsync(request);
             string responseContent = await response.Content.ReadAsStringAsync();
@@ -106,6 +114,10 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task TemperatureC_Is_Not_Minus100_WeatherForecast_Test()
         {
+            weatherForecast.Setup(x => x.TemperatureC).Returns(30);
+            weatherForecast.Setup(x => x.Date).Returns(DateTime.Now);
+            weatherForecast.Setup(x => x.Summary).Returns("Cool");
+            weatherForecast.Setup(x => x.TemperatureF).Returns(100);
             var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
             HttpResponseMessage response = await _client.SendAsync(request);
             string responseContent = await response.Content.ReadAsStringAsync();
