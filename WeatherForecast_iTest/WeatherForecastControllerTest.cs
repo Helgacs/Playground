@@ -26,12 +26,12 @@ namespace WeatherForecast_iTest
         private HttpClient _client;
         private TestServer _testServer;
         private Mock<IWeatherForecast> weatherForecast;
-        private List<IWeatherForecast> weatherForecasts;
+        private List<Mock<IWeatherForecast>> weatherForecasts;
 
         [SetUp]
         public void Setup()
         {
-            weatherForecasts = new List<IWeatherForecast>();
+            weatherForecasts = new List<Mock<IWeatherForecast>>();
             weatherForecast = new Mock<IWeatherForecast>();
 
         }
@@ -58,8 +58,23 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task Get_5_WeatherForecast_Test()
         {
-
-            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecast.Object)));
+            Mock<IWeatherForecast> w1 = new Mock<IWeatherForecast>();
+            Mock<IWeatherForecast> w2= new Mock<IWeatherForecast>();
+            Mock<IWeatherForecast> w3 = new Mock<IWeatherForecast>();
+            Mock<IWeatherForecast> w4 = new Mock<IWeatherForecast>();
+            Mock<IWeatherForecast> w5 = new Mock<IWeatherForecast>();
+            w1.Setup(x => x.TemperatureC).Returns(34);
+            w1.Setup(x => x.Summary).Returns("Cold");
+            w2.Setup(x => x.TemperatureC).Returns(40);
+            w3.Setup(x => x.TemperatureC).Returns(22);
+            w4.Setup(x => x.TemperatureC).Returns(36);
+            w5.Setup(x => x.TemperatureC).Returns(12);
+            weatherForecasts.Add(w1);
+            weatherForecasts.Add(w2);
+            weatherForecasts.Add(w3);
+            weatherForecasts.Add(w4);
+            weatherForecasts.Add(w5);
+            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecasts.ToArray())));
             _client = _testServer.CreateClient();
 
             var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
