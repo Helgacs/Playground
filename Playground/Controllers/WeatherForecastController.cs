@@ -17,18 +17,22 @@ namespace Playground.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
-        private List<IWeatherForecast> _weatherForecast = new List<IWeatherForecast>();
+        private List<IWeatherForecast> _weatherForecast;
+        private IEnumerable<IWeatherForecast> _weatherForecasts;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, IWeatherForecast weatherForecast)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IWeatherForecast weatherForecast, IEnumerable<IWeatherForecast> weatherForecasts)
         {
+            _weatherForecast = weatherForecasts.ToList();
             _logger = logger;
             _weatherForecast.Add(weatherForecast);
         }
+        
 
         [HttpGet]
         public IEnumerable<IWeatherForecast> Get()
         {
             return _weatherForecast;
         }
+
     }
 }

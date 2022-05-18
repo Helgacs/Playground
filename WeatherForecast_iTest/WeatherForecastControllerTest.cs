@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using NUnit.Framework.Constraints;
 using Playground;
 using Playground.Controllers;
 
@@ -24,16 +26,14 @@ namespace WeatherForecast_iTest
         private HttpClient _client;
         private TestServer _testServer;
         private Mock<IWeatherForecast> weatherForecast;
-        private List<Mock<IWeatherForecast>> weatherForecasts;
+        private List<IWeatherForecast> weatherForecasts;
 
         [SetUp]
         public void Setup()
         {
-            weatherForecasts = new List<Mock<IWeatherForecast>>();
+            weatherForecasts = new List<IWeatherForecast>();
             weatherForecast = new Mock<IWeatherForecast>();
-            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecast.Object)));
-            weatherForecasts.Add(weatherForecast);
-            _client = _testServer.CreateClient();
+
         }
         [TearDown]
         public void TearDown()
@@ -45,6 +45,8 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task Response_Is_Ok_WeatherForecast_Test()
         {
+            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecast.Object)));
+            _client = _testServer.CreateClient();
             weatherForecast.Setup(x => x.TemperatureC).Returns(30);
             weatherForecast.Setup(x => x.Date).Returns(DateTime.Now);
             weatherForecast.Setup(x => x.Summary).Returns("Cool");
@@ -56,10 +58,9 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task Get_5_WeatherForecast_Test()
         {
-            weatherForecast.Setup(x => x.TemperatureC).Returns(30);
-            weatherForecast.Setup(x => x.Date).Returns(DateTime.Now);
-            weatherForecast.Setup(x => x.Summary).Returns("Cool");
-            weatherForecast.Setup(x => x.TemperatureF).Returns(100);
+
+            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecast.Object)));
+            _client = _testServer.CreateClient();
 
             var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
             HttpResponseMessage response = await _client.SendAsync(request);
@@ -72,6 +73,8 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task Get_TemperatureC_WeatherForecast_Test()
         {
+            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecast.Object)));
+            _client = _testServer.CreateClient();
             weatherForecast.Setup(x => x.TemperatureC).Returns(35);
             var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
             HttpResponseMessage response = await _client.SendAsync(request);
@@ -93,6 +96,8 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task TemperatureC_Is_Minus100_WeatherForecast_Test()
         {
+            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecast.Object)));
+            _client = _testServer.CreateClient();
             weatherForecast.Setup(x => x.ModifyTemperatureC());
             var request = new HttpRequestMessage(HttpMethod.Get, "/weatherforecast");
             HttpResponseMessage response = await _client.SendAsync(request);
@@ -114,6 +119,8 @@ namespace WeatherForecast_iTest
         [Test]
         public async Task TemperatureC_Is_Not_Minus100_WeatherForecast_Test()
         {
+            _testServer = new TestServer(new WebHostBuilder().UseStartup<Startup>().ConfigureServices(x => x.AddSingleton(weatherForecast.Object)));
+            _client = _testServer.CreateClient();
             weatherForecast.Setup(x => x.TemperatureC).Returns(30);
             weatherForecast.Setup(x => x.Date).Returns(DateTime.Now);
             weatherForecast.Setup(x => x.Summary).Returns("Cool");
